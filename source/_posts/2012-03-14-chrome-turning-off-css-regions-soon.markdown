@@ -16,13 +16,13 @@ Our regions based pagination algorithm basically looks like this:
   * `while the last page has overflow:`
     * `add another page` 
 
-This was all working well enough in terms of paginating the content. There were some bugs related to click-able areas not being rendered where they were expected but we assumed these were bugs in Webkit / chrome and would get ironed out in future versions. Then one day I found out that regions were going to be [shut off by default in webkit](https://bugs.webkit.org/show_bug.cgi?id=78525#c0). Sure enough I installed [chrome canary](http://tools.google.com/dlpage/chromesxs), regions were gone and Readium did not handle it well. This was not good news for us.
+This was all working well enough in terms of paginating the content. There were some bugs related to click-able areas not being rendered where they were expected but we assumed these were bugs in Webkit / chrome and would get ironed out in future versions. Then one day we found out that regions were going to be [shut off by default in webkit](https://bugs.webkit.org/show_bug.cgi?id=78525#c0). Sure enough I installed [chrome canary](http://tools.google.com/dlpage/chromesxs), regions were gone and Readium did not handle it well. This was not good news for us.
 
 {% img center http://fuuu.us/152.png %}
 
 ## Challenge Accepted
 
-We decided that a short term solution to our problem would be to find a way to enable CSS3 regions to be turned back on. With a little support from the awesome chromium team at google, I managed to stumble through the chromium source code, submit [a patch](https://chromiumcodereview.appspot.com/9523002/) that allows regions to be turned on via the command line. This patch has landed.
+We decided that a short term solution to our problem would be to find a way to allow CSS3 regions to be turned back on. With a little support from the awesome chrome team at google, I managed to stumble through the chromium source code and submit [a patch](https://chromiumcodereview.appspot.com/9523002/) that allows regions to be turned on via the command line. This patch has landed.
 
 ## So What Can You do About it?
 
