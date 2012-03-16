@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Chrome Disabling CSS3 Regions Soon"
+title: "Readium Running On Chrome Canary"
 date: 2012-03-14 17:17
 comments: true
 author: Matthew Robertson
@@ -32,6 +32,8 @@ If you are using chrome Canary or you are from the future where chrome has moved
 2. In the page that opens find an entry called `Enable CSS Regions` and click the **enable** link
 3. Restart chrome for the changes to take affect
 
+Once you do this, you will may also notice that readium runs smoother and has a fewer bugs. This is all product of webkit's regions implementation becoming more mature (just as we had hoped).
+
 ## A Better Solution
 
-We realize that the above solution does not provide the best user experience, and we are currently seeking other solutions. One idea is to distribute Readium with a custom build of Webkit that has regions turned on. This may seem a bit heavy handed, but we were planning on creating a custom Webkit in order support vertical typography all along. A simpler solution that is likely to show up soon will be to degrade gracefully when regions are not available or come up with a pagination strategy that works without CSS regions. If you have any good ideas for how we might do this please put them in the [issue tracker](https://github.com/readium/readium/issues?sort=created&direction=desc&state=open).
+We realize that the above solution does not provide the best user experience, and we are currently seeking other solutions. One idea is to distribute Readium with a custom build of Webkit that has regions turned on. This may seem a bit heavy handed, but we were planning on creating a custom Webkit in order support vertical typography all along. A simpler solution that is likely to show up soon will be to degrade gracefully when regions are not available or come up with a pagination strategy that works without CSS regions. This will also help us to take a big step towards creating a version of Readium that runs as normal web page (not packaged as a chrome extension). If you have any good ideas for how we might do this please put them in the [issue tracker](https://github.com/readium/readium/issues?sort=created&direction=desc&state=open).
