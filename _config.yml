@@ -4,10 +4,10 @@
 
 url: http://readium.github.com
 title: The Readium Dev Blog
-subtitle: Documentaion and updates for the Readium project development
+subtitle: Documentation and updates for the Readium project development
 author: Readium
 simple_search: http://google.com/search
-description: Documentaion and updates for the Readium project development
+description: Documentation and updates for the Readium project development
 
 # Default date format is "ordinal" (resulting in "July 22nd 2007")
 # You can customize the format as defined in

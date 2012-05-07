@@ -3,6 +3,7 @@ layout: post
 title: "Running Readium on Mobile"
 date: 2012-04-16 17:14
 comments: true
+author: Matthew Robertson
 categories: 
 ---
 
