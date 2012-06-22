@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Readium Running On Chrome Canary - The Readium Dev Blog</title>
+  <meta name="author" content="Readium">
+
+  
+  <meta name="description" content="Way back in version 16 the Chrome browser began shipping support for CSS3 regions. This feature defined a declarative markup to have HTML content &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://readium.github.com/blog/2012/03/14/readium-running-on-chrome-canary">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="The Readium Dev Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+	<div style="float: left; margin-right: 10px; margin-top: -10px">
+		<img src="/images/large.png">
+	</div>
+	<div>
+  <h1><a href="/">The Readium Dev Blog</a></h1>
+  
+    <h2>Documentation and updates for the Readium project development</h2>
+  
+</div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:readium.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="http://github.readium.org/docs/ebook.html">Documentation</a></li>
+  <li><a href="https://github.com/readium/readium">Source</a></li>
+  <li>
+  	<a href="https://github.com/readium/readium/issues?sort=created&direction=desc&state=open">Tracker</a>
+  </li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Readium Running on Chrome Canary</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-14T17:17:00-07:00" pubdate data-updated="true">Mar 14<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Way back in version 16 the Chrome browser began shipping support for <a href="http://dev.w3.org/csswg/css3-regions/">CSS3 regions</a>. This feature defined a declarative markup to have HTML content flow into multiple regions such that the overflow from the first regions will spill over into the second region, overflow from the second will flow into the third etc. Parts of the implementation were shaky and / or missing (eg the javascript APIs were completely stubbed out) nevertheless, it was supported and it worked in the basic use cases, so we decided to leverage it in Readium to perform pagination of reflowable content.</p>
+
+<p>Our regions based pagination algorithm basically looks like this:</p>
+
+<ul>
+<li><code>whenever a repagination event occurs:</code>
+
+<ul>
+<li><code>make a pessimistic guess about how many pages are needed</code></li>
+<li><code>add that many pages to the dom</code></li>
+<li><code>while the last page has overflow:</code>
+
+<ul>
+<li><code>add another page</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+<p>This was all working well enough in terms of paginating the content. There were some bugs related to click-able areas not being rendered where they were expected but we assumed these were bugs in Webkit / chrome and would get ironed out in future versions. Then one day we found out that regions were going to be <a href="https://bugs.webkit.org/show_bug.cgi?id=78525#c0">shut off by default in webkit</a>. Sure enough I installed <a href="http://tools.google.com/dlpage/chromesxs">chrome canary</a>, regions were gone and Readium did not handle it well. This was not good news for us.</p>
+
+<p><img class="center" src="http://fuuu.us/152.png"></p>
+
+<h2>Challenge Accepted</h2>
+
+<p>We decided that a short term solution to our problem would be to find a way to allow CSS3 regions to be turned back on. With a little support from the awesome chrome team at google, I managed to stumble through the chromium source code and submit <a href="https://chromiumcodereview.appspot.com/9523002/">a patch</a> that allows regions to be turned on via the command line. This patch has landed.</p>
+
+<h2>So What Can You do About it?</h2>
+
+<p>If you are using chrome Canary or you are from the future where chrome has moved to a version in which CSS3 regions are off by default here are the steps you can take to turn them back on:</p>
+
+<ol>
+<li>Open a new tab in your browser and enter <code>about:flags</code> into the url bar</li>
+<li>In the page that opens find an entry called <code>Enable CSS Regions</code> and click the <strong>enable</strong> link</li>
+<li>Restart chrome for the changes to take affect</li>
+</ol>
+
+
+<p>Once you do this, you will may also notice that readium runs smoother and has a fewer bugs. This is all product of webkit&#8217;s regions implementation becoming more mature (just as we had hoped).</p>
+
+<h2>A Better Solution</h2>
+
+<p>We realize that the above solution does not provide the best user experience, and we are currently seeking other solutions. One idea is to distribute Readium with a custom build of Webkit that has regions turned on. This may seem a bit heavy handed, but we were planning on creating a custom Webkit in order support vertical typography all along. A simpler solution that is likely to show up soon will be to degrade gracefully when regions are not available or come up with a pagination strategy that works without CSS regions. This will also help us to take a big step towards creating a version of Readium that runs as normal web page (not packaged as a chrome extension). If you have any good ideas for how we might do this please put them in the <a href="https://github.com/readium/readium/issues?sort=created&amp;direction=desc&amp;state=open">issue tracker</a>.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Matthew Robertson</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-14T17:17:00-07:00" pubdate data-updated="true">Mar 14<span>th</span>, 2012</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://readium.github.com/blog/2012/03/14/readium-running-on-chrome-canary/" data-via="" data-counturl="http://readium.github.com/blog/2012/03/14/readium-running-on-chrome-canary/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/03/18/readium-adds-mathml-support-by-integrating-mathjax/" title="Next Post: Readium Adds MathML Support by Integrating MathJax">Readium Adds MathML Support by Integrating MathJax &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/06/21/readium-turns-0.4/">Readium Turns 0.4</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/05/04/unpacking-epubs-in-readium/">Unpacking EPUBs in Readium</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/running-readium-on-mobile/">Running Readium on Mobile</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/18/readium-adds-mathml-support-by-integrating-mathjax/">Readium Adds MathML Support by Integrating MathJax</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/14/readium-running-on-chrome-canary/">Readium Running On Chrome Canary</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/readium">@readium</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'readium',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Readium -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

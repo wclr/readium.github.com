@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Unpacking EPUBs in Readium - The Readium Dev Blog</title>
+  <meta name="author" content="Readium">
+
+  
+  <meta name="description" content="Something has been weighing heavily on my conscience for a while. Readium suffers from a serious lack of technical documentation. The closest I have &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://readium.github.com/blog/2012/05/04/unpacking-epubs-in-readium">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="The Readium Dev Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+	<div style="float: left; margin-right: 10px; margin-top: -10px">
+		<img src="/images/large.png">
+	</div>
+	<div>
+  <h1><a href="/">The Readium Dev Blog</a></h1>
+  
+    <h2>Documentation and updates for the Readium project development</h2>
+  
+</div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:readium.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/blog/">Blog</a></li>
+  <li><a href="http://github.readium.org/docs/ebook.html">Documentation</a></li>
+  <li><a href="https://github.com/readium/readium">Source</a></li>
+  <li>
+  	<a href="https://github.com/readium/readium/issues?sort=created&direction=desc&state=open">Tracker</a>
+  </li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Unpacking EPUBs in Readium</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-05-04T19:29:00-07:00" pubdate data-updated="true">May 4<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Something has been weighing heavily on my conscience for a while. Readium suffers from a serious lack of technical documentation. The closest I have come to putting anything into writing was creating <a href="https://github.com/readium/readium/wiki/Architecture">this wiki page</a> over two months ago. If we want to attract contributors to the project, we need to make diving into the source code as streamlined and painless as possible. Our architecture wiki is a pretty pathetic attempt in this regard.</p>
+
+<p>But today I am going to take the first step towards writing this wrong. I am planning a series of (at least) 3 blog posts explaining how the internals of Readium operate. I think the end result will be interesting not only to Readium contributors, but also to ebook publishers, developers of other ebook reading systems and anyone building large applications with HTML5 / javascript.</p>
+
+<h2>Unpacking an EPUB</h2>
+
+<p>I felt that the most natural place to start diving into Readium is the beginning. Readium currently ships with an empty library, so the first thing that every new user of our system does is import a file into their library.</p>
+
+<h3>How do you wanna do this?</h3>
+
+<p>As of writing, Readium offers users three ways to import content into their library: from a remote URL, from their local filesystem in packed format and from their local filesystem as an unpacked directory. Of these three cases, importing from the local filesystem in packed form is the most complex (the other two options are really just subcases of this problem), so we will explore this use case for the rest of the post.</p>
+
+<h3>Pick a file any file</h3>
+
+<p>To enable a user to select a file from their local filesystem Readium makes use of a plain html <code>&lt;input type='file'&gt;</code> element. But if you have done any web development before you will notice that what happens next is completely non-traditional. In a classic web application an HTML form is really a user friendly tool for adding parameters to an HTTP request. When you click the <strong>submit</strong> button of an HTML form, the browser serializes whatever you typed in the form&#8217;s fields into <code>application/x-www-form-urlencoded</code> data, tacks it on as the payload of an HTTP POST request (usually) and sends to the server.</p>
+
+<p>But Readium is 100% client side; there is no server to send the data to. We use the <code>&lt;input type='file'&gt;</code> element only to get a copy of user&#8217;s file into our javascript sandbox. Once we have that we use the HTML5 javascript method <a href="https://developer.mozilla.org/en/DOM/window.URL.createObjectURL">window.URL.createObjectURL</a> to create a URL that points to the file they selected. This is exactly where we would start if instead of selecting an EPUB from their filesystem, the user entered a URL (like I said, subcases).</p>
+
+<h3>XYZ PDQ</h3>
+
+<p>The next step is to unpack the file. EPUBs use the <a href="http://en.wikipedia.org/wiki/Zip_(file_format)">ZIP file format</a> to compress and archive their contents. To decompress this content we make use of an <a href="http://cheeso.members.winisp.net/examples.aspx#jsunzip">open source library</a> for unzipping the content in javascript. Unfortunately, decompressing files in javascript is dreadfully slow. This is because even though it has them, the <a href="https://developer.mozilla.org/en/JavaScript/Reference/Operators/Bitwise_Operators">bitwise operators</a> in javascript are slow. This is because javascript does not have an <code>int</code> type. But, when performing bitwise operations it pretends that it does. The result is that in order for a javascript engine to perform a bitwise operation, it needs to do a conversion from its floating point <code>Number</code> type to the equivalent 32bit signed integer, perform the operation, and then convert back to its <code>Number</code> type.</p>
+
+<p>This performance constraint is what motivated us to start allowing users to load an unpacked directory into Readium. To get this working we use the nifty <code>webkitdirectory</code> attribute on the form <code>&lt;input&gt;</code>. If you have never seen this in action before (or never knew of its existence) there is a pretty good demo available <a href="http://html5-demos.appspot.com/static/html5storage/demos/upload_directory/index.html">here</a> or better yet, check it out in the Readium <a href="https://github.com/readium/readium">source code</a>.</p>
+
+<h3>The Extraction</h3>
+
+<p>All of Readium&#8217;s logic for importing an epub from both zipped and unpacked formats is contained in <a href="https://github.com/readium/readium/blob/master/scripts/extractBook.js">/scripts/extractBook.js</a>. For those of you who speak the <a href="http://en.wikipedia.org/wiki/Unified_Modeling_Language">Unified Modeling Language</a>, here is a rundown of what is in there:</p>
+
+<p><img class="center" src="https://github.com/readium/readium/raw/master/docs/unpacking_uml.png"></p>
+
+<p>Perched at the top of the hierarchy is <code>Backbone.Model</code>. This is not actually defined in Readium. It is an object provided by <a href="http://documentcloud.github.com/backbone/">Backbone.js</a>, a framework used widely throughout Readium. I am planning on explaining our decision to use Backbone in more depth in a future post, but for now the most important part to understand is its <a href="http://documentcloud.github.com/backbone/#Events">Events module</a>. Basically Backbone makes triggering and subscribing to custom event super simple. Here is a quick rundown of it in code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// create a vanilla Backbone model</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// register a handler on foo</span>
+</span><span class='line'><span class="nx">foo</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;banana&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// this code will execute when the banana event occurs</span>
+</span><span class='line'>  <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;Wow, that was easy&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// fire the banana event on foo</span>
+</span><span class='line'><span class="nx">foo</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="s2">&quot;banana&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Instances of <code>Backbone.Model</code> also have a set of <a href="http://en.wikipedia.org/wiki/Observer_pattern">observable</a> attributes, that is to say, they fire <code>change</code> events when they are changed <em>automagically</em>. The entire control flow of unpacking logic is driven by Backone events. Event firing happens both explicitly (ie <code>this.trigger("something")</code>) and implicitly by changing an observable attribute (ie <code>this.set("someprop", "newVal")</code>).</p>
+
+<p>The next level in the hierarchy is <code>BookExtractorBase</code>. This is where all of the shared logic for parsing, managing and writing the imported EPUB to disk lives. I am going to come back to this in the next section.</p>
+
+<p>At the bottom of the hierarchy are <code>ZipBookExtractor</code> and <code>UnpackedBookExtractor</code>. Each of these contains the logic for going through either a ZIP archive or unpacked EPUB and calling the necessary extraction / importing logic (located primarily in <code>BookExtractorBase</code>). Let’s consider <code>ZipBookExtractor</code>.</p>
+
+<h3>ZipBookExtractor</h3>
+
+<p>Constructor logic is added to a <code>Backbone.Model</code> by overloading its <code>initialize()</code> method. The <code>Readium.ZipBookExtractor.Initialize</code> method does a few things:</p>
+
+<ol>
+<li>It makes sure that the a URL has been passed in to the constructor, if not, it throws an exception.</li>
+<li>If a URL has been passed in, it takes an MD5 hash of the string formed by concatenating a timestamp to the URL. This serves as a unique identifier, which readium uses to keep track of the file and also the name of the root filesystem directory Readium will write its contents to.</li>
+<li>It captures the src filename of the users upload. This is captured only for the purpose of displaying it later in the UI, and is not needed for any technical reason.</li>
+</ol>
+
+
+<p>Once a <code>ZipBookExtractor</code> instance has been created, the importing process is initiated by calling its <code>extract()</code> method. This method sets up the order in which the rest of the extraction process should execute by hooking up each method of the process to the event that will be fired upon completion of the previous step. Finally, it calls the asynchronous constructor of <code>Readium.FileSystemApi</code>, which is our own very thin wrapper around the <a href="http://www.html5rocks.com/en/tutorials/file/filesystem/">HTML5 filesystem API</a>.</p>
+
+<p>Once the filesystem is opened, the process continues by calling the constructor of our zip library. This constructor is also asynchronous. When initialized, it executes callback with the <code>Zip</code> object as its <code>this</code> context. The <code>Zip</code> has not been decompressed at this stage, only the archive data structures have been parsed, so it does contain information about all of the archive entries. We decompress individual entries as needed (the code for this is in the <code>extractEntryByName</code> method).</p>
+
+<h3>What to unpack first</h3>
+
+<p>After we perform some very rudimentary validations on the <code>Zip</code> object (mostly checking for the existence of a few essential items) we get into the brunt of unpacking the book. In general when unpacking an epub, what you want to get your hands on is the <em>OPF Package Document</em> but first you need to find it. In order to find it, you have to parse another xml file first: <code>META-INF/container.xml</code>. All epubs must have this file and it must be located at this absolute path in the archive. The <code>container.xml</code> specifies the absolute path of <code>package document</code> within the archive on an xml <code>&lt;rootfile&gt;</code> node. This is the only information that we take from this file.</p>
+
+<h3>Parsing the package document</h3>
+
+<p>Once we are able to find the <code>package document</code> within the archive the next step is to parse it. The logic for this is contained in the <a href="https://github.com/readium/readium/blob/master/scripts/models/packageDocument.js">PackageDocumentBase</a> class definition. This is separated from the unpacking code because we also parse package documents right before we display a publication.</p>
+
+<p>Whenever possible, we try to parse xml using a library called <a href="https://github.com/dnewcome/jath">Jath</a>. Jath allows declarative, template based parsing of xml into a structure of Javascript objects. Again I will differ the design justification for this to a later post.</p>
+
+<p>At this stage when parsing the <code>package document</code> we are really only interested in the meta data that it contains. Essentially what we are looking for is everything we need to show the publication in the library view (title, author, cover image etc). Once we have this information, we add in a bit more of our own (most importantly where we are going to write the package document on disk) and then save it to the browser’s local storage for quick access. We then iterate through the remaining archive contents and extract them one by one and write them to the HTML filesystem.</p>
+
+<h3>Monkey Patching</h3>
+
+<p>The last step of the unpacking process is something that I have termed <strong>Monkeypatching the URLs</strong>. There are a couple of reasons for this but the main motivation is that when we open an EPUB in the viewer, there are no guarantees that it will be loaded in a document with a URL pointing to where it actually exists on disk. The implication is that in order for us to ensure that URLs in individual spine items are handled correctly by the browser (for example consider the <code>src</code> attribute of an <code>&lt;img&gt;</code> tag) we need to convert them into fully qualified, absolute URLs, pointing to where we saved the file in the HTML5 filesystem. This logic is contained in <a href="https://github.com/readium/readium/blob/master/scripts/models/path_resolver.js">scripts/models/path_resolver.js</a>. This process is a little muddy right now and there are a <a href="https://github.com/readium/readium/issues/66">few bugs</a> left to iron out (so if you are looking for some way to contribute :) this might be a good spot to jump in).</p>
+
+<h3>Time to open</h3>
+
+<p>Once the book is fully unpacked, monkey patched and written to disk, we fire off an event to let the library code know that we are done. In response, we open the file in the viewer. How this happens, I will save for a future post.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Matthew Robertson</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-05-04T19:29:00-07:00" pubdate data-updated="true">May 4<span>th</span>, 2012</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://readium.github.com/blog/2012/05/04/unpacking-epubs-in-readium/" data-via="" data-counturl="http://readium.github.com/blog/2012/05/04/unpacking-epubs-in-readium/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/04/16/running-readium-on-mobile/" title="Previous Post: Running Readium on Mobile">&laquo; Running Readium on Mobile</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/06/21/readium-turns-0.4/" title="Next Post: Readium Turns 0.4">Readium Turns 0.4 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/06/21/readium-turns-0.4/">Readium Turns 0.4</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/05/04/unpacking-epubs-in-readium/">Unpacking EPUBs in Readium</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/running-readium-on-mobile/">Running Readium on Mobile</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/18/readium-adds-mathml-support-by-integrating-mathjax/">Readium Adds MathML Support by Integrating MathJax</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/14/readium-running-on-chrome-canary/">Readium Running On Chrome Canary</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/readium">@readium</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'readium',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Readium -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

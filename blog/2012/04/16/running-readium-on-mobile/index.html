@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>The Readium Dev Blog</title>
+  <title>Running Readium on Mobile - The Readium Dev Blog</title>
   <meta name="author" content="Readium">
 
   
-  <meta name="description" content="About the Project an open source library for handling EPUB documents Readium is in early beta stages. The goal of the project is to create an open &hellip;">
+  <meta name="description" content="Lately we have been experimenting with running the Readium source code in new and interesting ways. The entire application is written in HTML5 (html &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://readium.github.com">
+  <link rel="canonical" href="http://readium.github.com/blog/2012/04/16/running-readium-on-mobile">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -73,83 +73,15 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
-  <h2>About the Project</h2>
-
-<p><em>an open source library for handling EPUB documents</em></p>
-
-<p>Readium is in early beta stages. The goal of the project is to create an open source set of libraries for viewing and developing EPUB 2.0.1 and EPUB 3 content. Currently the project is available as a google chrome extension that enables viewing of EPUB content in the browser. For high-level information see the <a href="http://readium.org/">Readium Project</a>  website.</p>
-
-<h2>Contributing</h2>
-
-<p>Readium is in active development and we are keen to build a community of developers to help make it awesome. If you would like to be invited as a contributor leave a message in the issue tracker or <a href="mailto:matthewr@evidentpoint.com">send Matthew an email</a></p>
-
-<h2>Dependencies</h2>
-
-<p>Google Chrome Version 15+</p>
-
-<h2>Install</h2>
-
-<p>If you are a developer interested in hacking on the project, clone the repository and then follow the instruction for loading an unpacked extension from the <a href="http://code.google.com/chrome/extensions/getstarted.html#load-ext">chrome extensions page</a></p>
-
-<p>If you want to give the latest release a whirl, use teh one click install link below to add the extension to chrome.</p>
-
-<ul>
-<li><a href="http://github.readium.org/releases/readium.crx">Add To Chrome</a></li>
-</ul>
-
-
-<h2>License</h2>
-
-<p><a href="https://github.com/readium/readium/blob/master/LICENSE">BSD</a></p>
-
-<h2>Contributors</h2>
-
-<ul>
-<li><a href="http://idpf.org/">IDPF</a></li>
-<li><a href="http://www.evidentpoint.com/">Evident Point Software Corp.</a></li>
-<li><a href="http://www.bluefirereader.com/">Bluefire Productions</a></li>
-</ul>
-
-
-<h2>Contact</h2>
-
-<ul>
-<li>matthewr@evidentpoint.com</li>
-</ul>
-
-
-<h2>Download</h2>
-
-<p>You can download this project in either <a href="https://github.com/readium/readium/zipball/master">zip</a> or <a href="https://github.com/readium/readium/tarball/master">tar formats</a>.</p>
-
-<p>You can also clone the project with <a href="http://git-scm.com">Git</a> by running:</p>
-
-<pre><code>$ git clone git://github.com/readium/readium
-</code></pre>
-
-<h2>Attribution</h2>
-
-<p>Readium is an open source project, built on top of other open source projects. In addition to Chrome and WebKit, development of Readium would not have been possible without the following projects:</p>
-
-<ul>
-<li><a href="http://www.mathjax.org/">MathJax</a></li>
-<li><a href="http://jquery.com/">jQuery</a></li>
-<li><a href="http://documentcloud.github.com/backbone/">Backbonejs</a></li>
-<li><a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a></li>
-<li><a href="http://documentcloud.github.com/underscore/">Underscorejs</a></li>
-<li><a href="http://westcoastlogic.com/lawnchair/">Lawnchair</a></li>
-<li><a href="http://cheeso.members.winisp.net/srcview.aspx?dir=js-unzip&amp;file=js-zip.zip">ZipFile.js</a></li>
-<li><a href="http://code.google.com/p/jsuri/">jsUri</a></li>
-</ul>
-
-
-  
-    <footer>
+  <header>
+    
+      <h1 class="entry-title">Running Readium on Mobile</h1>
+    
+    
       <p class="meta">
         
-        
 
 
 
@@ -161,21 +93,79 @@
   
 
 
-<time datetime="2012-03-14T16:01:00-07:00" pubdate data-updated="true">Mar 14<span>th</span>, 2012</time>
+<time datetime="2012-04-16T17:14:00-07:00" pubdate data-updated="true">Apr 16<span>th</span>, 2012</time>
         
       </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Lately we have been experimenting with running the Readium source code in new and interesting ways. The entire application is written in HTML5 (html, css and javascript) so theoretically we should be able to package it up like a web site and run it in any modern browser. Practically we are utilizing a few cutting edge HTML5 features for which there is not yet widespread support (namely CSS3 regions and the HTML5 filesystem api). That said we do have a working, albeit somewhat fragile demo, that you can check out <a href="http://github.readium.org">here</a>. It is still riddled with bugs so if you get into trouble, refresh liberally or try another browser (for those of you with android devices, the demo works surprisingly well on <a href="https://play.google.com/store/apps/details?id=com.android.chrome&amp;hl=en">Chrome for Android</a>).</p>
+
+<h2>How it works</h2>
+
+<p>Because we cannot access the HTML5 filesystem API in most browsers, we are hosting the EPUB files on the server and fetching the content via AJAX from the viewer when they are opened. This means that you cannot actually load an EPUB file into this version of Readium but we think this will be OK for a lot of use cases (think online bookstore that wants to allow access to files for its customers) and there may be ways to implement this functionality (see below).</p>
+
+<p>The next thing you might notice is that pagination of re-flowable content is very broken on most browsers. That is because almost nobody has support for the CSS regions property yet. Thankfully one of contributors has come up with a polyfill that should provide a fallback in these cases and <a href="https://github.com/readium/readium/issues/61">is currently working on integrating it</a>.</p>
+
+<h2>What&#8217;s next</h2>
+
+<p>There is obviously a lot left to do if we want to get this version to a publicly usable state. Here are a few things we have thought about taking on:</p>
+
+<ul>
+<li><strong>Fix bugs</strong> -  there are a lot of issues that are stemming from the fact that serving thing over the web is different than serving them from a .crx. We need to take care of these one by one</li>
+<li><strong>Tune up the UI / UX</strong> - the Readium UI needs to be tweaked a little to make if feel at home on a mobile touch interface.</li>
+<li><strong>Package up the build as a Phonegap application</strong> - This may be a little further down the road, but once done it will give as another means to interact with the filesystem and let users import and read their own EPUB3 files on their devices.</li>
+</ul>
+
+
+<p>As always in anyone thinks they can help with any of these items (or anything else for that matter). Please don&#8217;t hesitate to create items in the <a href="https://github.com/readium/readium/issues?sort=created&amp;direction=desc&amp;state=open">github issue tracker</a> or better yet submit pull requests with patches.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
       
-        <div class="sharing">
   
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://readium.github.com/index.html" data-via="" data-counturl="http://readium.github.com/index.html" >Tweet</a>
+
+<span class="byline author vcard">Posted by <span class="fn">Matthew Robertson</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-16T17:14:00-07:00" pubdate data-updated="true">Apr 16<span>th</span>, 2012</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://readium.github.com/blog/2012/04/16/running-readium-on-mobile/" data-via="" data-counturl="http://readium.github.com/blog/2012/04/16/running-readium-on-mobile/" >Tweet</a>
   
   
   
 </div>
 
+    
+    <p class="meta">
       
-    </footer>
-  
+        <a class="basic-alignment left" href="/blog/2012/03/18/readium-adds-mathml-support-by-integrating-mathjax/" title="Previous Post: Readium Adds MathML Support by Integrating MathJax">&laquo; Readium Adds MathML Support by Integrating MathJax</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/05/04/unpacking-epubs-in-readium/" title="Next Post: Unpacking EPUBs in Readium">Unpacking EPUBs in Readium &raquo;</a>
+      
+    </p>
+  </footer>
 </article>
 
 </div>

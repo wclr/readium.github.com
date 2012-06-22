@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[The Readium Dev Blog]]></title>
+  <link href="http://readium.github.com/atom.xml" rel="self"/>
+  <link href="http://readium.github.com/"/>
+  <updated>2012-06-22T13:12:40-07:00</updated>
+  <id>http://readium.github.com/</id>
+  <author>
+    <name><![CDATA[Readium]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Readium Turns 0.4]]></title>
+    <link href="http://readium.github.com/blog/2012/06/21/readium-turns-0.4/"/>
+    <updated>2012-06-21T10:17:00-07:00</updated>
+    <id>http://readium.github.com/blog/2012/06/21/readium-turns-0.4</id>
+    <content type="html"><![CDATA[<p>We recently pushed out version 0.4.0 of Readium so it is time for an update.</p>
+
+<h2>Contributing</h2>
+
+<p>First up, there has been a lot of recent interest from people who want to contribute to the Readium project, which is always encouraging and very welcomed. It&#8217;s especially helpful to have contributors who can read and debug the rendering of ePubs in languages other than English. Matthew did a great job (more below) getting <a href="http://code.google.com/p/epub-samples/wiki/SamplesListing#kusamakura-japanese-vertical-writing">vertical Japanese text</a> to render, which he was pretty excited about. Did it actually render something that made sense? We had no idea (it did). But it <em>was</em> vertical.</p>
+
+<p>We also have users contributing bug reports, which is definitely helpful as these improve our understanding of what kind of ePubs are getting put together out there. So, if you&#8217;ve come across the Readium project and tried your unique ePub and it&#8217;s not working, let us know by creating an issue in the <a href="https://github.com/readium/readium/issues?direction=desc&amp;sort=created&amp;state=open">tracker</a>. We can&#8217;t promise quick fixes for everything, but it goes a long way to helping build a full-spec reader.</p>
+
+<h2>docco</h2>
+
+<p>We had a suggestion from <a href="https://github.com/schmidsi">Simon Schmid</a> to set up <a href="http://jashkenas.github.com/docco/">docco</a> to make the code base more accessible and understandable. docco pulls comments directly out of source files and lines them up with your code in a nicely formatted web page. It uses markdown and only pulls out the // comments; /**/ comments are left in the source. In any case, you don&#8217;t have to do anything but comment, we&#8217;ll take care of deploying the updated docco-mentation. We&#8217;ve got it set up and it can be accessed from the <a href="http://github.readium.org/docs/ebook.html">documentation</a> tab on this blog (you can navigate to other docco pages with the widget in the top right). In general contributing documentation is a great way to help out while familiarizing yourself with an open source project and Readium could use some more comments, so comment away.</p>
+
+<h2>IRC channel</h2>
+
+<p>We&#8217;ve set up an IRC channel for the Readium project on freenode.net. The channel is #Readium. Matthew or I will try to be on there during PST working hours and hopefully we can answer questions if they come up. I can&#8217;t imagine we&#8217;re going to have too many flame wars about Readium but since this <em>is</em> the internet, I would feel negligent not to remind everyone to keep it respectful.</p>
+
+<h2>CSS regions no more</h2>
+
+<p>In order to better support different forms of writing - right-to-left, vertical etc. - Matthew changed the reflowable pagination approach from the use of CSS3 regions to CSS columns. This was a big step forward for Readium as CSS columns are supported on <a href="http://caniuse.com/#feat=multicolumn">almost all modern browsers</a>. Also, because this approach is able to execute entirely within an <code>iframe</code> it solved a number of other issues we had been having (eg scoping of style rules). We are also able to allow spine level scripting for the reflowable content, which a lot of EPUB content creators were really excited to start working with.</p>
+
+<h2>Alternate Style Tags</h2>
+
+<p>An implementation of the Alternate Style Tags specification has been added to Readium. It is set up to interpret arbitrary sets of tags generally, although currently only day/night tags are specifically handled. This can be demonstrated with the use of the <a href="http://code.google.com/p/epub-samples/wiki/SamplesListing#wasteland">Wasteland</a> ePub from the Sample-Project, which has an alternate style set for &#8220;night&#8221; mode. If anyone sees any problems, missing parts of the spec or misinterpretations, please let me know!</p>
+
+<h2>Wrap-up</h2>
+
+<p>So that&#8217;s it for now. As always if you have questions, want to contribute, or submit bug reports, we can be contacted on <a href="https://github.com/readium/readium/">github</a>, by email, or now on IRC!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Unpacking EPUBs in Readium]]></title>
+    <link href="http://readium.github.com/blog/2012/05/04/unpacking-epubs-in-readium/"/>
+    <updated>2012-05-04T19:29:00-07:00</updated>
+    <id>http://readium.github.com/blog/2012/05/04/unpacking-epubs-in-readium</id>
+    <content type="html"><![CDATA[<p>Something has been weighing heavily on my conscience for a while. Readium suffers from a serious lack of technical documentation. The closest I have come to putting anything into writing was creating <a href="https://github.com/readium/readium/wiki/Architecture">this wiki page</a> over two months ago. If we want to attract contributors to the project, we need to make diving into the source code as streamlined and painless as possible. Our architecture wiki is a pretty pathetic attempt in this regard.</p>
+
+<p>But today I am going to take the first step towards writing this wrong. I am planning a series of (at least) 3 blog posts explaining how the internals of Readium operate. I think the end result will be interesting not only to Readium contributors, but also to ebook publishers, developers of other ebook reading systems and anyone building large applications with HTML5 / javascript.</p>
+
+<h2>Unpacking an EPUB</h2>
+
+<p>I felt that the most natural place to start diving into Readium is the beginning. Readium currently ships with an empty library, so the first thing that every new user of our system does is import a file into their library.</p>
+
+<h3>How do you wanna do this?</h3>
+
+<p>As of writing, Readium offers users three ways to import content into their library: from a remote URL, from their local filesystem in packed format and from their local filesystem as an unpacked directory. Of these three cases, importing from the local filesystem in packed form is the most complex (the other two options are really just subcases of this problem), so we will explore this use case for the rest of the post.</p>
+
+<h3>Pick a file any file</h3>
+
+<p>To enable a user to select a file from their local filesystem Readium makes use of a plain html <code>&lt;input type='file'&gt;</code> element. But if you have done any web development before you will notice that what happens next is completely non-traditional. In a classic web application an HTML form is really a user friendly tool for adding parameters to an HTTP request. When you click the <strong>submit</strong> button of an HTML form, the browser serializes whatever you typed in the form&#8217;s fields into <code>application/x-www-form-urlencoded</code> data, tacks it on as the payload of an HTTP POST request (usually) and sends to the server.</p>
+
+<p>But Readium is 100% client side; there is no server to send the data to. We use the <code>&lt;input type='file'&gt;</code> element only to get a copy of user&#8217;s file into our javascript sandbox. Once we have that we use the HTML5 javascript method <a href="https://developer.mozilla.org/en/DOM/window.URL.createObjectURL">window.URL.createObjectURL</a> to create a URL that points to the file they selected. This is exactly where we would start if instead of selecting an EPUB from their filesystem, the user entered a URL (like I said, subcases).</p>
+
+<h3>XYZ PDQ</h3>
+
+<p>The next step is to unpack the file. EPUBs use the <a href="http://en.wikipedia.org/wiki/Zip_(file_format)">ZIP file format</a> to compress and archive their contents. To decompress this content we make use of an <a href="http://cheeso.members.winisp.net/examples.aspx#jsunzip">open source library</a> for unzipping the content in javascript. Unfortunately, decompressing files in javascript is dreadfully slow. This is because even though it has them, the <a href="https://developer.mozilla.org/en/JavaScript/Reference/Operators/Bitwise_Operators">bitwise operators</a> in javascript are slow. This is because javascript does not have an <code>int</code> type. But, when performing bitwise operations it pretends that it does. The result is that in order for a javascript engine to perform a bitwise operation, it needs to do a conversion from its floating point <code>Number</code> type to the equivalent 32bit signed integer, perform the operation, and then convert back to its <code>Number</code> type.</p>
+
+<p>This performance constraint is what motivated us to start allowing users to load an unpacked directory into Readium. To get this working we use the nifty <code>webkitdirectory</code> attribute on the form <code>&lt;input&gt;</code>. If you have never seen this in action before (or never knew of its existence) there is a pretty good demo available <a href="http://html5-demos.appspot.com/static/html5storage/demos/upload_directory/index.html">here</a> or better yet, check it out in the Readium <a href="https://github.com/readium/readium">source code</a>.</p>
+
+<h3>The Extraction</h3>
+
+<p>All of Readium&#8217;s logic for importing an epub from both zipped and unpacked formats is contained in <a href="https://github.com/readium/readium/blob/master/scripts/extractBook.js">/scripts/extractBook.js</a>. For those of you who speak the <a href="http://en.wikipedia.org/wiki/Unified_Modeling_Language">Unified Modeling Language</a>, here is a rundown of what is in there:</p>
+
+<p><img class="center" src="https://github.com/readium/readium/raw/master/docs/unpacking_uml.png"></p>
+
+<p>Perched at the top of the hierarchy is <code>Backbone.Model</code>. This is not actually defined in Readium. It is an object provided by <a href="http://documentcloud.github.com/backbone/">Backbone.js</a>, a framework used widely throughout Readium. I am planning on explaining our decision to use Backbone in more depth in a future post, but for now the most important part to understand is its <a href="http://documentcloud.github.com/backbone/#Events">Events module</a>. Basically Backbone makes triggering and subscribing to custom event super simple. Here is a quick rundown of it in code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// create a vanilla Backbone model</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// register a handler on foo</span>
+</span><span class='line'><span class="nx">foo</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;banana&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// this code will execute when the banana event occurs</span>
+</span><span class='line'>  <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;Wow, that was easy&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// fire the banana event on foo</span>
+</span><span class='line'><span class="nx">foo</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="s2">&quot;banana&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Instances of <code>Backbone.Model</code> also have a set of <a href="http://en.wikipedia.org/wiki/Observer_pattern">observable</a> attributes, that is to say, they fire <code>change</code> events when they are changed <em>automagically</em>. The entire control flow of unpacking logic is driven by Backone events. Event firing happens both explicitly (ie <code>this.trigger("something")</code>) and implicitly by changing an observable attribute (ie <code>this.set("someprop", "newVal")</code>).</p>
+
+<p>The next level in the hierarchy is <code>BookExtractorBase</code>. This is where all of the shared logic for parsing, managing and writing the imported EPUB to disk lives. I am going to come back to this in the next section.</p>
+
+<p>At the bottom of the hierarchy are <code>ZipBookExtractor</code> and <code>UnpackedBookExtractor</code>. Each of these contains the logic for going through either a ZIP archive or unpacked EPUB and calling the necessary extraction / importing logic (located primarily in <code>BookExtractorBase</code>). Let’s consider <code>ZipBookExtractor</code>.</p>
+
+<h3>ZipBookExtractor</h3>
+
+<p>Constructor logic is added to a <code>Backbone.Model</code> by overloading its <code>initialize()</code> method. The <code>Readium.ZipBookExtractor.Initialize</code> method does a few things:</p>
+
+<ol>
+<li>It makes sure that the a URL has been passed in to the constructor, if not, it throws an exception.</li>
+<li>If a URL has been passed in, it takes an MD5 hash of the string formed by concatenating a timestamp to the URL. This serves as a unique identifier, which readium uses to keep track of the file and also the name of the root filesystem directory Readium will write its contents to.</li>
+<li>It captures the src filename of the users upload. This is captured only for the purpose of displaying it later in the UI, and is not needed for any technical reason.</li>
+</ol>
+
+
+<p>Once a <code>ZipBookExtractor</code> instance has been created, the importing process is initiated by calling its <code>extract()</code> method. This method sets up the order in which the rest of the extraction process should execute by hooking up each method of the process to the event that will be fired upon completion of the previous step. Finally, it calls the asynchronous constructor of <code>Readium.FileSystemApi</code>, which is our own very thin wrapper around the <a href="http://www.html5rocks.com/en/tutorials/file/filesystem/">HTML5 filesystem API</a>.</p>
+
+<p>Once the filesystem is opened, the process continues by calling the constructor of our zip library. This constructor is also asynchronous. When initialized, it executes callback with the <code>Zip</code> object as its <code>this</code> context. The <code>Zip</code> has not been decompressed at this stage, only the archive data structures have been parsed, so it does contain information about all of the archive entries. We decompress individual entries as needed (the code for this is in the <code>extractEntryByName</code> method).</p>
+
+<h3>What to unpack first</h3>
+
+<p>After we perform some very rudimentary validations on the <code>Zip</code> object (mostly checking for the existence of a few essential items) we get into the brunt of unpacking the book. In general when unpacking an epub, what you want to get your hands on is the <em>OPF Package Document</em> but first you need to find it. In order to find it, you have to parse another xml file first: <code>META-INF/container.xml</code>. All epubs must have this file and it must be located at this absolute path in the archive. The <code>container.xml</code> specifies the absolute path of <code>package document</code> within the archive on an xml <code>&lt;rootfile&gt;</code> node. This is the only information that we take from this file.</p>
+
+<h3>Parsing the package document</h3>
+
+<p>Once we are able to find the <code>package document</code> within the archive the next step is to parse it. The logic for this is contained in the <a href="https://github.com/readium/readium/blob/master/scripts/models/packageDocument.js">PackageDocumentBase</a> class definition. This is separated from the unpacking code because we also parse package documents right before we display a publication.</p>
+
+<p>Whenever possible, we try to parse xml using a library called <a href="https://github.com/dnewcome/jath">Jath</a>. Jath allows declarative, template based parsing of xml into a structure of Javascript objects. Again I will differ the design justification for this to a later post.</p>
+
+<p>At this stage when parsing the <code>package document</code> we are really only interested in the meta data that it contains. Essentially what we are looking for is everything we need to show the publication in the library view (title, author, cover image etc). Once we have this information, we add in a bit more of our own (most importantly where we are going to write the package document on disk) and then save it to the browser’s local storage for quick access. We then iterate through the remaining archive contents and extract them one by one and write them to the HTML filesystem.</p>
+
+<h3>Monkey Patching</h3>
+
+<p>The last step of the unpacking process is something that I have termed <strong>Monkeypatching the URLs</strong>. There are a couple of reasons for this but the main motivation is that when we open an EPUB in the viewer, there are no guarantees that it will be loaded in a document with a URL pointing to where it actually exists on disk. The implication is that in order for us to ensure that URLs in individual spine items are handled correctly by the browser (for example consider the <code>src</code> attribute of an <code>&lt;img&gt;</code> tag) we need to convert them into fully qualified, absolute URLs, pointing to where we saved the file in the HTML5 filesystem. This logic is contained in <a href="https://github.com/readium/readium/blob/master/scripts/models/path_resolver.js">scripts/models/path_resolver.js</a>. This process is a little muddy right now and there are a <a href="https://github.com/readium/readium/issues/66">few bugs</a> left to iron out (so if you are looking for some way to contribute :) this might be a good spot to jump in).</p>
+
+<h3>Time to open</h3>
+
+<p>Once the book is fully unpacked, monkey patched and written to disk, we fire off an event to let the library code know that we are done. In response, we open the file in the viewer. How this happens, I will save for a future post.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Running Readium on Mobile]]></title>
+    <link href="http://readium.github.com/blog/2012/04/16/running-readium-on-mobile/"/>
+    <updated>2012-04-16T17:14:00-07:00</updated>
+    <id>http://readium.github.com/blog/2012/04/16/running-readium-on-mobile</id>
+    <content type="html"><![CDATA[<p>Lately we have been experimenting with running the Readium source code in new and interesting ways. The entire application is written in HTML5 (html, css and javascript) so theoretically we should be able to package it up like a web site and run it in any modern browser. Practically we are utilizing a few cutting edge HTML5 features for which there is not yet widespread support (namely CSS3 regions and the HTML5 filesystem api). That said we do have a working, albeit somewhat fragile demo, that you can check out <a href="http://github.readium.org">here</a>. It is still riddled with bugs so if you get into trouble, refresh liberally or try another browser (for those of you with android devices, the demo works surprisingly well on <a href="https://play.google.com/store/apps/details?id=com.android.chrome&amp;hl=en">Chrome for Android</a>).</p>
+
+<h2>How it works</h2>
+
+<p>Because we cannot access the HTML5 filesystem API in most browsers, we are hosting the EPUB files on the server and fetching the content via AJAX from the viewer when they are opened. This means that you cannot actually load an EPUB file into this version of Readium but we think this will be OK for a lot of use cases (think online bookstore that wants to allow access to files for its customers) and there may be ways to implement this functionality (see below).</p>
+
+<p>The next thing you might notice is that pagination of re-flowable content is very broken on most browsers. That is because almost nobody has support for the CSS regions property yet. Thankfully one of contributors has come up with a polyfill that should provide a fallback in these cases and <a href="https://github.com/readium/readium/issues/61">is currently working on integrating it</a>.</p>
+
+<h2>What&#8217;s next</h2>
+
+<p>There is obviously a lot left to do if we want to get this version to a publicly usable state. Here are a few things we have thought about taking on:</p>
+
+<ul>
+<li><strong>Fix bugs</strong> -  there are a lot of issues that are stemming from the fact that serving thing over the web is different than serving them from a .crx. We need to take care of these one by one</li>
+<li><strong>Tune up the UI / UX</strong> - the Readium UI needs to be tweaked a little to make if feel at home on a mobile touch interface.</li>
+<li><strong>Package up the build as a Phonegap application</strong> - This may be a little further down the road, but once done it will give as another means to interact with the filesystem and let users import and read their own EPUB3 files on their devices.</li>
+</ul>
+
+
+<p>As always in anyone thinks they can help with any of these items (or anything else for that matter). Please don&#8217;t hesitate to create items in the <a href="https://github.com/readium/readium/issues?sort=created&amp;direction=desc&amp;state=open">github issue tracker</a> or better yet submit pull requests with patches.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Readium Adds MathML Support by Integrating MathJax]]></title>
+    <link href="http://readium.github.com/blog/2012/03/18/readium-adds-mathml-support-by-integrating-mathjax/"/>
+    <updated>2012-03-18T17:11:00-07:00</updated>
+    <id>http://readium.github.com/blog/2012/03/18/readium-adds-mathml-support-by-integrating-mathjax</id>
+    <content type="html"><![CDATA[<p>Readium now renders MathML by integrating MathJax. <a href="http://www.mathjax.org">MathJax</a> is an open source, cross-browser JavaScript library sponsored by the American Mathematical Society, Design Science, and the Society for Industrial and Applied Mathematics as well as <a href="http://www.mathjax.org/sponsors/">several partners</a>.</p>
+
+<p>Work on native support of MathML in WebKit <a href="https://trac.webkit.org/wiki/MathML">has begun</a> but is a long way from being ready to use. With MathJax, Readium will be able to render MathML, an important step towards Readium&#8217;s full EPUB 3 support. Additionally, MathJax offers zoom for accessibility and cut-and-paste of mathematical content.</p>
+
+<p>The necessary code has been pulled into the master branch and, as of version 0.1.9, Readium displays math beautifully. You can find a sample <a href="https://github.com/dpvc/readium/blob/mathjax/examples/sample-tex-mml.epub">here</a>.</p>
+
+<p>Thanks to Davide Cervone, MathJax&#8217;s Lead Developer, for his help in making MathJax work in Readium.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Readium Running On Chrome Canary]]></title>
+    <link href="http://readium.github.com/blog/2012/03/14/readium-running-on-chrome-canary/"/>
+    <updated>2012-03-14T17:17:00-07:00</updated>
+    <id>http://readium.github.com/blog/2012/03/14/readium-running-on-chrome-canary</id>
+    <content type="html"><![CDATA[<p>Way back in version 16 the Chrome browser began shipping support for <a href="http://dev.w3.org/csswg/css3-regions/">CSS3 regions</a>. This feature defined a declarative markup to have HTML content flow into multiple regions such that the overflow from the first regions will spill over into the second region, overflow from the second will flow into the third etc. Parts of the implementation were shaky and / or missing (eg the javascript APIs were completely stubbed out) nevertheless, it was supported and it worked in the basic use cases, so we decided to leverage it in Readium to perform pagination of reflowable content.</p>
+
+<p>Our regions based pagination algorithm basically looks like this:</p>
+
+<ul>
+<li><code>whenever a repagination event occurs:</code>
+
+<ul>
+<li><code>make a pessimistic guess about how many pages are needed</code></li>
+<li><code>add that many pages to the dom</code></li>
+<li><code>while the last page has overflow:</code>
+
+<ul>
+<li><code>add another page</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+<p>This was all working well enough in terms of paginating the content. There were some bugs related to click-able areas not being rendered where they were expected but we assumed these were bugs in Webkit / chrome and would get ironed out in future versions. Then one day we found out that regions were going to be <a href="https://bugs.webkit.org/show_bug.cgi?id=78525#c0">shut off by default in webkit</a>. Sure enough I installed <a href="http://tools.google.com/dlpage/chromesxs">chrome canary</a>, regions were gone and Readium did not handle it well. This was not good news for us.</p>
+
+<p><img class="center" src="http://fuuu.us/152.png"></p>
+
+<h2>Challenge Accepted</h2>
+
+<p>We decided that a short term solution to our problem would be to find a way to allow CSS3 regions to be turned back on. With a little support from the awesome chrome team at google, I managed to stumble through the chromium source code and submit <a href="https://chromiumcodereview.appspot.com/9523002/">a patch</a> that allows regions to be turned on via the command line. This patch has landed.</p>
+
+<h2>So What Can You do About it?</h2>
+
+<p>If you are using chrome Canary or you are from the future where chrome has moved to a version in which CSS3 regions are off by default here are the steps you can take to turn them back on:</p>
+
+<ol>
+<li>Open a new tab in your browser and enter <code>about:flags</code> into the url bar</li>
+<li>In the page that opens find an entry called <code>Enable CSS Regions</code> and click the <strong>enable</strong> link</li>
+<li>Restart chrome for the changes to take affect</li>
+</ol>
+
+
+<p>Once you do this, you will may also notice that readium runs smoother and has a fewer bugs. This is all product of webkit&#8217;s regions implementation becoming more mature (just as we had hoped).</p>
+
+<h2>A Better Solution</h2>
+
+<p>We realize that the above solution does not provide the best user experience, and we are currently seeking other solutions. One idea is to distribute Readium with a custom build of Webkit that has regions turned on. This may seem a bit heavy handed, but we were planning on creating a custom Webkit in order support vertical typography all along. A simpler solution that is likely to show up soon will be to degrade gracefully when regions are not available or come up with a pagination strategy that works without CSS regions. This will also help us to take a big step towards creating a version of Readium that runs as normal web page (not packaged as a chrome extension). If you have any good ideas for how we might do this please put them in the <a href="https://github.com/readium/readium/issues?sort=created&amp;direction=desc&amp;state=open">issue tracker</a>.</p>
+]]></content>
+  </entry>
+  
+</feed>
